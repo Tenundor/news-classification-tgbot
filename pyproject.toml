@@ -19,6 +19,15 @@ dvc-gdrive = "^3.0.1"
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.6.0"
 
+[tool.black]
+line-length = 90
+target-version = ["py310"]
+
+[tool.isort]
+profile = "black"
+line_length = 90
+lines_after_imports = 2
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
