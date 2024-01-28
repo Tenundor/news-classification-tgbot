@@ -18,7 +18,7 @@ async def main():
     dp.include_router(handlers.router)
 
     await bot.delete_webhook(drop_pending_updates=True)
-    await dp.start_polling(bot, predictor=predictor)
+    await dp.start_polling(bot, predictor=predictor, ratings=[])
 
 
 if __name__ == "__main__":

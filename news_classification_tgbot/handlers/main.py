@@ -1,9 +1,9 @@
-from aiogram import Router
+from aiogram import F, Router
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, ReplyKeyboardRemove
 
-from .. import services, templates
+from .. import filters, keyboards, services, templates
 from ..prediction import TextClassificationPredictor
 from ..states import States
 
@@ -54,3 +54,42 @@ async def process_text_classification(
     prediction = await services.classify_text(text, predictor)
     await message.answer(**templates.get_prediction_out_msg(prediction))
     await state.clear()
+
+
+@router.message(Command("evaluate"))
+async def cmd_evaluate_bot(message: Message, state: FSMContext):
+    await state.clear()
+    await message.answer(
+        **templates.get_bot_evaluating_msg(),
+        reply_markup=keyboards.get_evaluating_keyboard(),
+    )
+    await state.set_state(States.bot_evaluating_state)
+
+
+@router.message(F.text, filters.IsDigitFilter(), States.bot_evaluating_state)
+async def process_rating(message: Message, state: FSMContext, ratings: list[int]):
+    rating = int(message.text)
+    if 1 <= rating <= 5:
+        ratings.append(rating)
+        await message.answer(
+            **templates.get_thanks_for_rating_msg(),
+            reply_markup=ReplyKeyboardRemove(),
+        )
+        await state.clear()
+    else:
+        await message.answer(**templates.get_invalid_rating_msg())
+
+
+@router.message(Command("get_rating"))
+async def cms_get_rating(message: Message, state: FSMContext, ratings: list[int]):
+    await state.clear()
+    if len(ratings) == 0:
+        await message.answer(**templates.get_no_ratings_msg())
+    else:
+        avg_rating = round(sum(ratings) / len(ratings), 0)
+        await message.answer(**templates.get_avg_rating_msg(avg_rating))
+
+
+@router.message()
+async def process_unknown_message(message: Message):
+    await message.reply(**templates.get_inability_to_process_msg())
